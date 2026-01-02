@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: S3 -> Lambda grayscale -> S3 (same bucket), loop prevention, no circular deps.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 30
+    MemorySize: 256
+    Architectures: [x86_64]
+
+Resources:
+  # Bucket
+  AppStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "images-${AWS::AccountId}-${AWS::Region}"
+
+  # SQS
+  ProcessingQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 60
+
+  # Lambda Ingest (S3 -> SQS)
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: ingest.lambda_handler
+      Runtime: python3.12
+      Environment:
+        Variables:
+          QUEUE_URL: !Ref ProcessingQueue
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt ProcessingQueue.QueueName
+      Events:
+        S3UploadEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref AppStorageBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: incoming
+
+  # Lambda Extractor (SQS -> S3 Metadata)
+  ExtractorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/extractor/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Timeout: 30
+      MemorySize: 512
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Ref AppStorageBucket
+        - S3WritePolicy:
+            BucketName: !Ref AppStorageBucket
+      Events:
+        QueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt ProcessingQueue.Arn
+            BatchSize: 5
