@@ -51,8 +51,8 @@ Resources:
   ExtractorFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: src/extractor/
-      Handler: app.lambda_handler
+      CodeUri: src/
+      Handler: extractor.lambda_handler
       Runtime: python3.12
       Timeout: 30
       MemorySize: 512
