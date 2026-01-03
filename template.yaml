@@ -74,3 +74,5 @@ Resources:
 Outputs:
   BucketName:
     Value: !Ref AppStorageBucket
+  QueueUrl:
+    Value: !Ref ProcessingQueue
