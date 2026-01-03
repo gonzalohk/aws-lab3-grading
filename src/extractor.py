@@ -34,8 +34,9 @@ def lambda_handler(event, context):
                 "source_key": key,
                 "format": img.format,
                 "size_px": img.size,
-                "mode": img.mode,
-                "file_size": len(img_bytes),
+                "width": img.width,
+                "height": img.height,
+                "file_size_bytes": len(img_bytes),
                 "exif": str(img.info.get('exif', 'No EXIF'))
             }
 
