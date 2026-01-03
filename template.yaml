@@ -61,6 +61,10 @@ Resources:
             BucketName: !Ref AppStorageBucket
         - S3WritePolicy:
             BucketName: !Ref AppStorageBucket
+        - S3CrudPolicy:
+            BucketName: !Ref AppStorageBucket
+        - SQSPollerPolicy:
+            QueueName: !GetAtt ProcessingQueue.QueueName
       Events:
         QueueEvent:
           Type: SQS
