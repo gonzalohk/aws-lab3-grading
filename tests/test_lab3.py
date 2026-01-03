@@ -69,7 +69,8 @@ def test_pipeline_processes_images_and_is_idempotent() -> None:
 
     head = wait_for_s3_key(bucket, metadata_key)
     data = read_json_from_s3(bucket, metadata_key)
-
+    print head
+    print data
     assert data["source_bucket"] == bucket
     assert data["source_key"] == TEST_IMAGE_KEY
     assert isinstance(data["width"], int) and data["width"] > 0
